@@ -9,8 +9,6 @@ import plotly.express as px
 
 
 @st.cache_resource
-
-@st.cache_resource
 def carrega_modelo():    
     # Link direto para o modelo no Google Drive
     url = 'https://drive.google.com/uc?id=1_rxFti4boCHCwyIhzEW_gTDtOUPLH-Yw'
@@ -43,10 +41,11 @@ def carrega_imagem():
 
 def previsao(interpreter, image):
 
-    input_details =  interpreter.get_input_details()
+    input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    interpreter.set_tensor(input_details[0]['index'],imagem) 
+    # Corrigido: substituído 'imagem' por 'image'
+    interpreter.set_tensor(input_details[0]['index'], image) 
 
     interpreter.invoke()
 
@@ -55,29 +54,33 @@ def previsao(interpreter, image):
 
     df = pd.DataFrame()
     df['classes'] = classes
-    df['probabilidades (%)'] = 100*output_data[0]
+    df['probabilidades (%)'] = 100 * output_data[0]
     
-    fig = px.bar(df,y='classes',x='probabilidades (%)',  orientation='h', text='probabilidades (%)', title='Probabilidade de Classes de Doenças em Uvas')
-    st.ploty_chart(fig)
+    fig = px.bar(df, 
+                 y='classes', 
+                 x='probabilidades (%)',  
+                 orientation='h', 
+                 text='probabilidades (%)', 
+                 title='Probabilidade de Classes de Doenças em Uvas')
+    st.plotly_chart(fig)
 
 
 def main():
     st.set_page_config(
         page_title="Classifica Folhas de Videira",
-        page_icon="��",
+        page_icon="🍇",
     )
-    st.write("# Classifica Folhas de Videira! ��")
+    st.write("# Classifica Folhas de Videira! 🍇")
 
-    
-    #Carrega modelo
+    # Carrega modelo
     interpreter = carrega_modelo()
 
-    #Carrega imagem
+    # Carrega imagem
     image = carrega_imagem()
 
-    #Classifica
+    # Classifica
     if image is not None:
-        previsao(interpreter,image)
+        previsao(interpreter, image)
 
 
 if __name__ == "__main__":
