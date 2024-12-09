@@ -10,16 +10,19 @@ import plotly.express as px
 
 @st.cache_resource
 
+@st.cache_resource
 def carrega_modelo():    
-    #https://drive.google.com/file/d/1_rxFti4boCHCwyIhzEW_gTDtOUPLH-Yw/view?usp=drive_link
-   url = 'https://drive.google.com/uc?id=1_rxFti4boCHCwyIhzEW_gTDtOUPLH-Yw'
-   gdown.download(url, 'modelo_quantizado16bits.tflite', quiet=False)
-
+    # Link direto para o modelo no Google Drive
+    url = 'https://drive.google.com/uc?id=1_rxFti4boCHCwyIhzEW_gTDtOUPLH-Yw'
     
-    gdown.download(url, 'modelo_quantizado16bits.tflite')
+    # Baixa o arquivo
+    gdown.download(url, 'modelo_quantizado16bits.tflite', quiet=False)
+    
+    # Carrega o modelo TensorFlow Lite
     interpreter = tf.lite.Interpreter(model_path='modelo_quantizado16bits.tflite')
     interpreter.allocate_tensors()
     return interpreter
+
 
 def carrega_imagem():
     uploaded_file = st.file_uploader('Arraste e solte uma imagem aqui ou clique para selecionar uma', 
