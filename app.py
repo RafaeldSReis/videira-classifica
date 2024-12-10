@@ -25,7 +25,7 @@ def carrega_modelo():
 @st.cache_resource
 def carrega_classes():
     # Carrega os nomes das classes do arquivo JSON
-    with open("class_namess.json", "r") as f:
+    with open("class_names.json", "r") as f:
         class_names = json.load(f)
     return class_names
 
@@ -57,6 +57,13 @@ def carrega_imagem():
     else:
         st.warning("Por favor, envie uma imagem válida.")
         return None
+
+
+def numero_classes_do_modelo(interpreter):
+    """Retorna o número de classes do modelo."""
+    output_details = interpreter.get_output_details()
+    num_classes = output_details[0]['shape'][1]
+    return num_classes
 
 
 def previsao(interpreter, image, class_names):
@@ -113,6 +120,10 @@ def main():
 
     # Carrega modelo
     interpreter = carrega_modelo()
+
+    # Exibe o número de classes do modelo
+    num_classes = numero_classes_do_modelo(interpreter)
+    st.info(f"O modelo possui {num_classes} classes.")
 
     # Carrega os nomes das classes
     class_names = carrega_classes()
