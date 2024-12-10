@@ -6,7 +6,6 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import plotly.express as px
-import json  # Import necessário para lidar com o arquivo JSON
 
 
 @st.cache_resource
@@ -21,36 +20,6 @@ def carrega_modelo():
     interpreter = tf.lite.Interpreter(model_path='modelo_quantizado16bits.tflite')
     interpreter.allocate_tensors()
     return interpreter
-
-
-def carrega_classes():
-    """
-    Carrega os nomes das classes a partir do arquivo class_names.json.
-    """
-    try:
-        with open("class_names.json", "r") as f:
-            classes = json.load(f)
-        return classes
-    except Exception as e:
-        st.error(f"Erro ao carregar as classes: {e}")
-        return []
-
-
-def ajustar_classes(interpreter, classes):
-    """
-    Ajusta o número de classes para corresponder ao número de saídas do modelo.
-    """
-    output_details = interpreter.get_output_details()
-    numero_saidas = output_details[0]['shape'][1]  # Número de saídas do modelo
-
-    if len(classes) < numero_saidas:
-        st.warning("O arquivo JSON contém menos classes do que o modelo espera. Ajustando automaticamente.")
-        classes.extend([f"Classe {i}" for i in range(len(classes), numero_saidas)])
-    elif len(classes) > numero_saidas:
-        st.warning("O arquivo JSON contém mais classes do que o modelo espera. Ajustando automaticamente.")
-        classes = classes[:numero_saidas]
-
-    return classes
 
 
 def carrega_imagem():
@@ -98,18 +67,12 @@ def previsao(interpreter, image):
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
 
-    # Carregar os nomes das classes do arquivo JSON
-    classes = carrega_classes()
-    if not classes:
-        st.error("Erro: Não foi possível carregar as classes.")
-        return
-
-    # Ajustar as classes para o número esperado pelo modelo
-    classes = ajustar_classes(interpreter, classes)
+    # Gerar nomes genéricos para as classes com base na quantidade retornada
+    classes = [f'Classe {i+1}' for i in range(len(output_data[0]))]
 
     # Criar DataFrame para visualização
     df = pd.DataFrame()
-    df['classes'] = classes  # Usar os nomes das classes
+    df['classes'] = classes  # Lista dinâmica de classes
     df['probabilidades (%)'] = 100 * output_data[0]
 
     # Ordenar por probabilidades e selecionar as top N classes
@@ -129,18 +92,18 @@ def previsao(interpreter, image):
 
 def main():
     st.set_page_config(
-        page_title="Classifica Peças Baldan",
-        page_icon="🔧",
+        page_title="Classifica Folhas de Videira",
+        page_icon="🍇",
     )
-    st.write("# Classifica Peças Baldan! 🔧")
+    st.write("# Classifica Folhas de Videira! 🍇")
 
-    # Carrega o modelo
+    # Carrega modelo
     interpreter = carrega_modelo()
 
-    # Carrega a imagem
+    # Carrega imagem
     image = carrega_imagem()
 
-    # Faz a previsão
+    # Classifica
     if image is not None:
         previsao(interpreter, image)
 
