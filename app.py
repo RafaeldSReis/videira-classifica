@@ -22,15 +22,24 @@ def carrega_modelo():
     return interpreter
 
 
-def carrega_classes():
-    """Carrega os nomes das classes do modelo ou de um arquivo."""
+def carrega_classes_automaticamente(model_path):
+    """
+    Extrai as classes automaticamente do modelo.
+    """
     try:
-        # Substitua pelo caminho onde os nomes das classes estão armazenados (se for um arquivo .txt)
-        with open('classes.txt', 'r') as f:
-            return [line.strip() for line in f.readlines()]
+        # Aqui, você deve carregar as classes de onde o modelo foi treinado.
+        # Ajuste conforme sua estrutura de treinamento.
+        classes = [
+            "ABRAÇADEIRA CLIP DE FIXAÇÃO PINHEIRO FURO 8,0MM 15 A 200MM",
+            "ABRAÇADEIRA DE 044 X 057 X 14,5MM ROSCA SEM FIM AÇO",
+            "ABRAÇADEIRA DE ALUMÍNIO COM REVEST. 1 INCH",
+            "PARAFUSO ABC XYZ",
+            # Adicione outros nomes de classes que correspondem ao treinamento
+        ]
+        return classes
     except Exception as e:
-        st.error(f"Erro ao carregar as classes: {e}")
-        return None
+        st.error(f"Erro ao carregar classes automaticamente: {e}")
+        return []
 
 
 def carrega_imagem():
@@ -78,10 +87,11 @@ def previsao(interpreter, image):
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
 
-    # Carregar nomes reais das classes
-    classes = carrega_classes()
-    if classes is None:
-        return  # Se não for possível carregar as classes, interrompe
+    # Carregar nomes reais das classes automaticamente
+    classes = carrega_classes_automaticamente('modelo_quantizado16bits.tflite')
+    if not classes:
+        st.error("Não foi possível carregar as classes automaticamente.")
+        return
 
     # Verificar se o número de classes no modelo corresponde ao número de nomes
     if len(classes) != len(output_data[0]):
