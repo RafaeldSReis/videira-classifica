@@ -6,6 +6,7 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import json
 
 
 @st.cache_resource
@@ -22,6 +23,19 @@ def carrega_modelo():
     return interpreter
 
 
+@st.cache_resource
+def carrega_classes():
+    # Carregar lista de classes manualmente ou de um arquivo JSON
+    try:
+        with open("classes.json", "r") as f:
+            classes = json.load(f)
+        st.success(f"Número de classes carregadas: {len(classes)}")
+        return classes
+    except FileNotFoundError:
+        st.error("O arquivo 'classes.json' não foi encontrado. Certifique-se de criá-lo com a lista de classes.")
+        return []
+
+
 def carrega_imagem():
     uploaded_file = st.file_uploader('Arraste e solte uma imagem aqui ou clique para selecionar uma', 
                                      type=['png', 'jpg', 'jpeg'])
@@ -33,8 +47,8 @@ def carrega_imagem():
         st.image(image, caption="Imagem Original")
         st.success('Imagem foi carregada com sucesso')
 
-        # Redimensionar a imagem para o tamanho esperado pelo modelo
-        image = image.resize((224, 224))  # Substitua (224, 224) pelo tamanho do modelo
+        # Redimensionar a imagem para o tamanho esperado pelo modelo (256x256)
+        image = image.resize((256, 256))
 
         # Converter a imagem para array numpy
         image = np.array(image, dtype=np.float32)
@@ -51,34 +65,33 @@ def carrega_imagem():
         return None
 
 
-def previsao(interpreter, image):
+def previsao(interpreter, image, classes):
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
-
-    # Certifique-se de que a imagem está no formato esperado
-    expected_shape = input_details[0]['shape']
-    if image.shape != tuple(expected_shape):
-        st.error(f"Erro: o modelo espera uma imagem com o formato {expected_shape}, mas recebeu {image.shape}")
-        return
 
     interpreter.set_tensor(input_details[0]['index'], image)
     interpreter.invoke()
 
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
-    classes = ['BlackMeasles', 'BlackRot', 'HealthyGrapes', 'LeafBlight']
+
+    # Validar se o tamanho de classes é compatível com a saída do modelo
+    if len(classes) != len(output_data[0]):
+        st.error(f"Erro: o número de classes definidas ({len(classes)}) não corresponde ao número de saídas do modelo ({len(output_data[0])}).")
+        return
 
     # Criar DataFrame para visualização
     df = pd.DataFrame()
     df['classes'] = classes
     df['probabilidades (%)'] = 100 * output_data[0]
 
+    # Exibir gráfico de probabilidades
     fig = px.bar(df, 
                  y='classes', 
                  x='probabilidades (%)',  
                  orientation='h', 
                  text='probabilidades (%)', 
-                 title='Probabilidade de Classes de Doenças em Uvas')
+                 title='Probabilidade de Classes')
     st.plotly_chart(fig)
 
 
@@ -92,12 +105,17 @@ def main():
     # Carrega modelo
     interpreter = carrega_modelo()
 
+    # Carrega classes
+    classes = carrega_classes()
+    if not classes:
+        return  # Sai do app se não houver classes
+
     # Carrega imagem
     image = carrega_imagem()
 
     # Classifica
     if image is not None:
-        previsao(interpreter, image)
+        previsao(interpreter, image, classes)
 
 
 if __name__ == "__main__":
