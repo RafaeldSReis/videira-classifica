@@ -9,9 +9,7 @@ import plotly.express as px
 
 
 @st.cache_resource
-def carrega_modelo():    
-
-    # https://drive.google.com/file/d/1ODh59KUq998DU3TmGP9ttXMZvbfxZvRl/view?usp=drive_link
+def carrega_modelo():
     # Link direto para o modelo no Google Drive
     url = 'https://drive.google.com/uc?id=1ODh59KUq998DU3TmGP9ttXMZvbfxZvRl'
     
@@ -32,32 +30,49 @@ def carrega_imagem():
         image_data = uploaded_file.read()
         image = Image.open(io.BytesIO(image_data))
 
-        st.image(image)
+        st.image(image, caption="Imagem Original")
         st.success('Imagem foi carregada com sucesso')
 
+        # Redimensionar a imagem para o tamanho esperado pelo modelo
+        image = image.resize((224, 224))  # Substitua (224, 224) pelo tamanho do modelo
+
+        # Converter a imagem para array numpy
         image = np.array(image, dtype=np.float32)
+
+        # Normalizar os valores dos pixels para o intervalo [0, 1]
         image = image / 255.0
+
+        # Adicionar uma dimensão para representar o batch (modelo espera batch)
         image = np.expand_dims(image, axis=0)
 
-        return image    
+        return image
+    else:
+        st.warning("Por favor, envie uma imagem válida.")
+        return None
+
 
 def previsao(interpreter, image):
-
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    # Corrigido: substituído 'imagem' por 'image'
-    interpreter.set_tensor(input_details[0]['index'], image) 
+    # Certifique-se de que a imagem está no formato esperado
+    expected_shape = input_details[0]['shape']
+    if image.shape != tuple(expected_shape):
+        st.error(f"Erro: o modelo espera uma imagem com o formato {expected_shape}, mas recebeu {image.shape}")
+        return
 
+    interpreter.set_tensor(input_details[0]['index'], image)
     interpreter.invoke()
 
+    # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
     classes = ['BlackMeasles', 'BlackRot', 'HealthyGrapes', 'LeafBlight']
 
+    # Criar DataFrame para visualização
     df = pd.DataFrame()
     df['classes'] = classes
     df['probabilidades (%)'] = 100 * output_data[0]
-    
+
     fig = px.bar(df, 
                  y='classes', 
                  x='probabilidades (%)',  
