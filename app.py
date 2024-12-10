@@ -6,7 +6,8 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import plotly.express as px
- 
+import json
+
 @st.cache_resource
 def carrega_modelo():
     # Link direto para o modelo no Google Drive
@@ -19,6 +20,14 @@ def carrega_modelo():
     interpreter = tf.lite.Interpreter(model_path='modelo_quantizado16bits.tflite')
     interpreter.allocate_tensors()
     return interpreter
+
+
+@st.cache_resource
+def carrega_classes():
+    # Carrega os nomes das classes do arquivo JSON
+    with open("class_names.json", "r") as f:
+        class_names = json.load(f)
+    return class_names
 
 
 def carrega_imagem():
@@ -50,7 +59,7 @@ def carrega_imagem():
         return None
 
 
-def previsao(interpreter, image):
+def previsao(interpreter, image, class_names):
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
@@ -66,12 +75,14 @@ def previsao(interpreter, image):
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
 
-    # Gerar nomes genéricos para as classes com base na quantidade retornada
-    classes = [f'Classe {i+1}' for i in range(len(output_data[0]))]
+    # Verificar se o número de classes no modelo coincide com o arquivo class_names.json
+    if len(output_data[0]) != len(class_names):
+        st.error("Erro: o número de classes no modelo não coincide com o arquivo class_names.json")
+        return
 
     # Criar DataFrame para visualização
     df = pd.DataFrame()
-    df['classes'] = classes  # Lista dinâmica de classes
+    df['classes'] = [class_names[i] for i in range(len(output_data[0]))]
     df['probabilidades (%)'] = 100 * output_data[0]
 
     # Ordenar por probabilidades e selecionar as top N classes
@@ -88,6 +99,10 @@ def previsao(interpreter, image):
     )
     st.plotly_chart(fig)
 
+    # Exibir a classe com maior probabilidade
+    top_class = df.iloc[0]
+    st.success(f"A peça identificada é: {top_class['classes']} com {top_class['probabilidades (%)']:.2f}% de certeza.")
+
 
 def main():
     st.set_page_config(
@@ -99,12 +114,15 @@ def main():
     # Carrega modelo
     interpreter = carrega_modelo()
 
+    # Carrega os nomes das classes
+    class_names = carrega_classes()
+
     # Carrega imagem
     image = carrega_imagem()
 
     # Classifica
     if image is not None:
-        previsao(interpreter, image)
+        previsao(interpreter, image, class_names)
 
 
 if __name__ == "__main__":
