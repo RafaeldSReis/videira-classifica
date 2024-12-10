@@ -27,7 +27,12 @@ def carrega_modelo():
 @st.cache_resource
 def carrega_classes():
     # Diretório usado no treinamento para organizar as classes
-    train_dir = "caminho/para/seu/dataset"  # Substitua pelo caminho correto
+    train_dir = "./dataset_treinamento"  # Substitua pelo caminho correto
+
+    # Verificar se o diretório existe
+    if not os.path.exists(train_dir):
+        st.error(f"O diretório especificado não existe: {train_dir}")
+        return []
 
     # Obter os nomes das classes a partir das subpastas
     classes = sorted(os.listdir(train_dir))
@@ -52,7 +57,7 @@ def carrega_imagem():
         st.success('Imagem foi carregada com sucesso')
 
         # Redimensionar a imagem para o tamanho esperado pelo modelo (256x256)
-        image = image.resize((256, 256))  # Substitua por (256, 256) se necessário
+        image = image.resize((256, 256))
 
         # Converter a imagem para array numpy
         image = np.array(image, dtype=np.float32)
@@ -111,6 +116,8 @@ def main():
 
     # Carrega classes
     classes = carrega_classes()
+    if not classes:
+        return  # Sai do app se não houver classes
 
     # Carrega imagem
     image = carrega_imagem()
