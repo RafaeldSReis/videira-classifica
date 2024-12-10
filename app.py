@@ -36,6 +36,23 @@ def carrega_classes():
         return []
 
 
+def ajustar_classes(interpreter, classes):
+    """
+    Ajusta o número de classes para corresponder ao número de saídas do modelo.
+    """
+    output_details = interpreter.get_output_details()
+    numero_saidas = output_details[0]['shape'][1]  # Número de saídas do modelo
+
+    if len(classes) < numero_saidas:
+        st.warning("O arquivo JSON contém menos classes do que o modelo espera. Ajustando automaticamente.")
+        classes.extend([f"Classe {i}" for i in range(len(classes), numero_saidas)])
+    elif len(classes) > numero_saidas:
+        st.warning("O arquivo JSON contém mais classes do que o modelo espera. Ajustando automaticamente.")
+        classes = classes[:numero_saidas]
+
+    return classes
+
+
 def carrega_imagem():
     uploaded_file = st.file_uploader('Arraste e solte uma imagem aqui ou clique para selecionar uma', 
                                      type=['png', 'jpg', 'jpeg'])
@@ -83,9 +100,12 @@ def previsao(interpreter, image):
 
     # Carregar os nomes das classes do arquivo JSON
     classes = carrega_classes()
-    if not classes or len(classes) != len(output_data[0]):
-        st.error("Erro: Número de classes no arquivo JSON não corresponde à saída do modelo.")
+    if not classes:
+        st.error("Erro: Não foi possível carregar as classes.")
         return
+
+    # Ajustar as classes para o número esperado pelo modelo
+    classes = ajustar_classes(interpreter, classes)
 
     # Criar DataFrame para visualização
     df = pd.DataFrame()
