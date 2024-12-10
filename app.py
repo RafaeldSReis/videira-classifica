@@ -33,8 +33,8 @@ def carrega_imagem():
         st.image(image, caption="Imagem Original")
         st.success('Imagem foi carregada com sucesso')
 
-        # Redimensionar a imagem para o tamanho esperado pelo modelo
-        image = image.resize((224, 224))  # Substitua (224, 224) pelo tamanho do modelo
+        # Redimensionar a imagem para o tamanho esperado pelo modelo (256x256)
+        image = image.resize((256, 256))  # Alterado para (256, 256)
 
         # Converter a imagem para array numpy
         image = np.array(image, dtype=np.float32)
@@ -49,6 +49,7 @@ def carrega_imagem():
     else:
         st.warning("Por favor, envie uma imagem válida.")
         return None
+
 
 
 def previsao(interpreter, image):
