@@ -25,7 +25,7 @@ def carrega_modelo():
 @st.cache_resource
 def carrega_classes():
     # Carrega os nomes das classes do arquivo JSON
-    with open("class_names.json", "r") as f:
+    with open("class_namess.json", "r") as f:
         class_names = json.load(f)
     return class_names
 
