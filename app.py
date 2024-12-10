@@ -50,6 +50,11 @@ def carrega_imagem():
         st.warning("Por favor, envie uma imagem válida.")
         return None
 
+def carrega_classes():
+    # Carrega os nomes das classes do arquivo JSON
+    with open("class_namess.json", "r") as f:
+        class_namess = json.load(f)
+    return class_namess
 
 def previsao(interpreter, image):
     input_details = interpreter.get_input_details()
