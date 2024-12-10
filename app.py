@@ -6,6 +6,8 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import os
+import json
 
 
 @st.cache_resource
@@ -22,6 +24,22 @@ def carrega_modelo():
     return interpreter
 
 
+@st.cache_resource
+def carrega_classes():
+    # Diretório usado no treinamento para organizar as classes
+    train_dir = "caminho/para/seu/dataset"  # Substitua pelo caminho correto
+
+    # Obter os nomes das classes a partir das subpastas
+    classes = sorted(os.listdir(train_dir))
+    
+    # Salvar as classes em um arquivo JSON para uso futuro
+    with open("classes.json", "w") as f:
+        json.dump(classes, f)
+
+    st.success(f"Número de classes carregadas: {len(classes)}")
+    return classes
+
+
 def carrega_imagem():
     uploaded_file = st.file_uploader('Arraste e solte uma imagem aqui ou clique para selecionar uma', 
                                      type=['png', 'jpg', 'jpeg'])
@@ -34,7 +52,7 @@ def carrega_imagem():
         st.success('Imagem foi carregada com sucesso')
 
         # Redimensionar a imagem para o tamanho esperado pelo modelo (256x256)
-        image = image.resize((256, 256))  # Alterado para (256, 256)
+        image = image.resize((256, 256))  # Substitua por (256, 256) se necessário
 
         # Converter a imagem para array numpy
         image = np.array(image, dtype=np.float32)
@@ -51,8 +69,7 @@ def carrega_imagem():
         return None
 
 
-
-def previsao(interpreter, image):
+def previsao(interpreter, image, classes):
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
@@ -61,12 +78,6 @@ def previsao(interpreter, image):
 
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
-
-    # Verificar o número de classes na saída
-    print(f"Tamanho da saída do modelo: {len(output_data[0])}")
-
-    # Lista de classes precisa corresponder ao número de saídas
-    classes = ['BlackMeasles', 'BlackRot', 'HealthyGrapes', 'LeafBlight']  # Atualize conforme necessário
 
     # Validar se o tamanho de classes é compatível com a saída do modelo
     if len(classes) != len(output_data[0]):
@@ -78,6 +89,7 @@ def previsao(interpreter, image):
     df['classes'] = classes
     df['probabilidades (%)'] = 100 * output_data[0]
 
+    # Exibir gráfico de probabilidades
     fig = px.bar(df, 
                  y='classes', 
                  x='probabilidades (%)',  
@@ -85,7 +97,6 @@ def previsao(interpreter, image):
                  text='probabilidades (%)', 
                  title='Probabilidade de Classes')
     st.plotly_chart(fig)
-
 
 
 def main():
@@ -98,12 +109,15 @@ def main():
     # Carrega modelo
     interpreter = carrega_modelo()
 
+    # Carrega classes
+    classes = carrega_classes()
+
     # Carrega imagem
     image = carrega_imagem()
 
     # Classifica
     if image is not None:
-        previsao(interpreter, image)
+        previsao(interpreter, image, classes)
 
 
 if __name__ == "__main__":
