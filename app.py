@@ -6,6 +6,7 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import json  # Import necessário para lidar com o arquivo JSON
 
 
 @st.cache_resource
@@ -20,6 +21,19 @@ def carrega_modelo():
     interpreter = tf.lite.Interpreter(model_path='modelo_quantizado16bits.tflite')
     interpreter.allocate_tensors()
     return interpreter
+
+
+def carrega_classes():
+    """
+    Carrega os nomes das classes a partir do arquivo class_names.json.
+    """
+    try:
+        with open("class_names.json", "r") as f:
+            classes = json.load(f)
+        return classes
+    except Exception as e:
+        st.error(f"Erro ao carregar as classes: {e}")
+        return []
 
 
 def carrega_imagem():
@@ -67,12 +81,15 @@ def previsao(interpreter, image):
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
 
-    # Gerar nomes genéricos para as classes com base na quantidade retornada
-    classes = [f'Classe {i+1}' for i in range(len(output_data[0]))]
+    # Carregar os nomes das classes do arquivo JSON
+    classes = carrega_classes()
+    if not classes or len(classes) != len(output_data[0]):
+        st.error("Erro: Número de classes no arquivo JSON não corresponde à saída do modelo.")
+        return
 
     # Criar DataFrame para visualização
     df = pd.DataFrame()
-    df['classes'] = classes  # Lista dinâmica de classes
+    df['classes'] = classes  # Usar os nomes das classes
     df['probabilidades (%)'] = 100 * output_data[0]
 
     # Ordenar por probabilidades e selecionar as top N classes
@@ -92,18 +109,18 @@ def previsao(interpreter, image):
 
 def main():
     st.set_page_config(
-        page_title="Classifica Folhas de Videira",
-        page_icon="🍇",
+        page_title="Classifica Peças Baldan",
+        page_icon="🔧",
     )
-    st.write("# Classifica Folhas de Videira! 🍇")
+    st.write("# Classifica Peças Baldan! 🔧")
 
-    # Carrega modelo
+    # Carrega o modelo
     interpreter = carrega_modelo()
 
-    # Carrega imagem
+    # Carrega a imagem
     image = carrega_imagem()
 
-    # Classifica
+    # Faz a previsão
     if image is not None:
         previsao(interpreter, image)
 
