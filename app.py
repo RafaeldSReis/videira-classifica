@@ -11,7 +11,7 @@ import plotly.express as px
 @st.cache_resource
 def carrega_modelo():
     # Link direto para o modelo no Google Drive
-    url = 'https://drive.google.com/uc?id=1ODh59KUq998DU3TmGP9ttXMZvbfxZvRl'
+    url = 'https://drive.google.com/uc?id=1ODh59KUq998DU3TmGP9ttXMZvbfxZvRl/111-'
     
     # Baixa o arquivo
     gdown.download(url, 'modelo_quantizado16bits.tflite', quiet=False)
@@ -50,11 +50,6 @@ def carrega_imagem():
         st.warning("Por favor, envie uma imagem válida.")
         return None
 
-def carrega_classes():
-    # Carrega os nomes das classes do arquivo JSON
-    with open("class_namess.json", "r") as f:
-        class_namess = json.load(f)
-    return class_namess
 
 def previsao(interpreter, image):
     input_details = interpreter.get_input_details()
@@ -94,10 +89,6 @@ def previsao(interpreter, image):
     )
     st.plotly_chart(fig)
 
-def numero_classes_do_modelo(interpreter):
-    output_details = interpreter.get_output_details()
-    num_classes = output_details[0]['shape'][1]
-    return num_classes
 
 def main():
     st.set_page_config(
