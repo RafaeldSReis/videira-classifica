@@ -25,7 +25,7 @@ def carrega_modelo():
 @st.cache_resource
 def carrega_classes():
     # Carrega os nomes das classes do arquivo JSON
-    with open("class_names.json", "r") as f:
+    with open("class_namess.json", "r") as f:
         class_names = json.load(f)
     return class_names
 
@@ -109,6 +109,12 @@ def previsao(interpreter, image, class_names):
     # Exibir a classe com maior probabilidade
     top_class = df.iloc[0]
     st.success(f"A peça identificada é: {top_class['classes']} com {top_class['probabilidades (%)']:.2f}% de certeza.")
+
+
+with open("class_names.json", "r") as f:
+    class_names = json.load(f)
+
+print(f"O arquivo JSON contém {len(class_names)} classes.")
 
 
 def main():
