@@ -111,7 +111,7 @@ def previsao(interpreter, image, class_names):
     st.success(f"A peça identificada é: {top_class['classes']} com {top_class['probabilidades (%)']:.2f}% de certeza.")
 
 
-with open("class_names.json", "r") as f:
+with open("class_namess.json", "r") as f:
     class_names = json.load(f)
 
 print(f"O arquivo JSON contém {len(class_names)} classes.")
