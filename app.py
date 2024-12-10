@@ -22,6 +22,17 @@ def carrega_modelo():
     return interpreter
 
 
+def carrega_classes():
+    """Carrega os nomes das classes do modelo ou de um arquivo."""
+    try:
+        # Substitua pelo caminho onde os nomes das classes estão armazenados (se for um arquivo .txt)
+        with open('classes.txt', 'r') as f:
+            return [line.strip() for line in f.readlines()]
+    except Exception as e:
+        st.error(f"Erro ao carregar as classes: {e}")
+        return None
+
+
 def carrega_imagem():
     uploaded_file = st.file_uploader('Arraste e solte uma imagem aqui ou clique para selecionar uma', 
                                      type=['png', 'jpg', 'jpeg'])
@@ -67,12 +78,19 @@ def previsao(interpreter, image):
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
 
-    # Gerar nomes genéricos para as classes com base na quantidade retornada
-    classes = [f'Classe {i+1}' for i in range(len(output_data[0]))]
+    # Carregar nomes reais das classes
+    classes = carrega_classes()
+    if classes is None:
+        return  # Se não for possível carregar as classes, interrompe
+
+    # Verificar se o número de classes no modelo corresponde ao número de nomes
+    if len(classes) != len(output_data[0]):
+        st.error(f"Erro: o número de classes ({len(classes)}) não corresponde à saída do modelo ({len(output_data[0])}).")
+        return
 
     # Criar DataFrame para visualização
     df = pd.DataFrame()
-    df['classes'] = classes  # Lista dinâmica de classes
+    df['classes'] = classes  # Usar os nomes reais das classes
     df['probabilidades (%)'] = 100 * output_data[0]
 
     # Ordenar por probabilidades e selecionar as top N classes
