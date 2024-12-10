@@ -56,18 +56,22 @@ def previsao(interpreter, image):
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    # Certifique-se de que a imagem está no formato esperado
-    expected_shape = input_details[0]['shape']
-    if image.shape != tuple(expected_shape):
-        st.error(f"Erro: o modelo espera uma imagem com o formato {expected_shape}, mas recebeu {image.shape}")
-        return
-
     interpreter.set_tensor(input_details[0]['index'], image)
     interpreter.invoke()
 
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
-    classes = ['BlackMeasles', 'BlackRot', 'HealthyGrapes', 'LeafBlight']
+
+    # Verificar o número de classes na saída
+    print(f"Tamanho da saída do modelo: {len(output_data[0])}")
+
+    # Lista de classes precisa corresponder ao número de saídas
+    classes = ['BlackMeasles', 'BlackRot', 'HealthyGrapes', 'LeafBlight']  # Atualize conforme necessário
+
+    # Validar se o tamanho de classes é compatível com a saída do modelo
+    if len(classes) != len(output_data[0]):
+        st.error(f"Erro: o número de classes definidas ({len(classes)}) não corresponde ao número de saídas do modelo ({len(output_data[0])}).")
+        return
 
     # Criar DataFrame para visualização
     df = pd.DataFrame()
@@ -79,8 +83,9 @@ def previsao(interpreter, image):
                  x='probabilidades (%)',  
                  orientation='h', 
                  text='probabilidades (%)', 
-                 title='Probabilidade de Classes de Doenças em Uvas')
+                 title='Probabilidade de Classes')
     st.plotly_chart(fig)
+
 
 
 def main():
