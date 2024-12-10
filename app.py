@@ -60,7 +60,6 @@ def carrega_imagem():
 
 
 def numero_classes_do_modelo(interpreter):
-    """Retorna o número de classes do modelo."""
     output_details = interpreter.get_output_details()
     num_classes = output_details[0]['shape'][1]
     return num_classes
@@ -110,11 +109,11 @@ def previsao(interpreter, image, class_names):
     top_class = df.iloc[0]
     st.success(f"A peça identificada é: {top_class['classes']} com {top_class['probabilidades (%)']:.2f}% de certeza.")
 
-
-with open("class_namess.json", "r") as f:
-    class_names = json.load(f)
-
-print(f"O arquivo JSON contém {len(class_names)} classes.")
+    
+    with open("class_namess.json", "r") as f:
+        class_names = json.load(f)
+    
+    print(f"O arquivo JSON contém {len(class_names)} classes.")
 
 
 def main():
