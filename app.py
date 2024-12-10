@@ -94,6 +94,10 @@ def previsao(interpreter, image):
     )
     st.plotly_chart(fig)
 
+def numero_classes_do_modelo(interpreter):
+    output_details = interpreter.get_output_details()
+    num_classes = output_details[0]['shape'][1]
+    return num_classes
 
 def main():
     st.set_page_config(
