@@ -34,7 +34,7 @@ def carrega_imagem():
         st.success('Imagem foi carregada com sucesso')
 
         # Redimensionar a imagem para o tamanho esperado pelo modelo
-        image = image.resize((256, 256))  # Substitua (224, 224) pelo tamanho do modelo
+        image = image.resize((256, 256))  # Substitua (256, 256) pelo tamanho que o modelo espera
 
         # Converter a imagem para array numpy
         image = np.array(image, dtype=np.float32)
@@ -66,19 +66,27 @@ def previsao(interpreter, image):
 
     # Obter os resultados da predição
     output_data = interpreter.get_tensor(output_details[0]['index'])
-    classes = ['BlackMeasles', 'BlackRot', 'HealthyGrapes', 'LeafBlight']
+
+    # Gerar nomes genéricos para as classes com base na quantidade retornada
+    classes = [f'Classe {i+1}' for i in range(len(output_data[0]))]
 
     # Criar DataFrame para visualização
     df = pd.DataFrame()
-    df['classes'] = classes
+    df['classes'] = classes  # Lista dinâmica de classes
     df['probabilidades (%)'] = 100 * output_data[0]
 
-    fig = px.bar(df, 
-                 y='classes', 
-                 x='probabilidades (%)',  
-                 orientation='h', 
-                 text='probabilidades (%)', 
-                 title='Probabilidade de Classes de Doenças em Uvas')
+    # Ordenar por probabilidades e selecionar as top N classes
+    top_n = 10  # Mostre as top 10 classes
+    df = df.sort_values(by='probabilidades (%)', ascending=False).head(top_n)
+    
+    fig = px.bar(
+        df,
+        y='classes',
+        x='probabilidades (%)',
+        orientation='h',
+        text='probabilidades (%)',
+        title=f'Top {top_n} Classes Previstos pelo Modelo'
+    )
     st.plotly_chart(fig)
 
 
